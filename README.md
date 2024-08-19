@@ -105,5 +105,52 @@ if __name__=="__main__":
         parser.register_plugin(AssignmentParser)
         parser.register_plugin(ExpressionParser)
         ast = parser.parse()
-        print(ast)
+        print("ast:", ast)
+```
+
+AST:
+
+```python
+[
+ ('FUNCTION_DEF', 'print', ['a'], ('BLOCK', [])), 
+ ('FUNCTION_DEF', 'add', ['a', 'b'], 
+  ('BLOCK', 
+   [
+    ('RETURN', (('+', 'a', 'b'), 19))
+   ]
+  )
+ ), 
+ ('VAR', ('ASSIGN', 'x', '5')), 
+ ('VAR', ('ASSIGN', 'y', '3')), 
+ ('VAR', 
+  ('ASSIGN', 'result', 
+   ('FUNCTION_CALL', 'add', 
+    [
+     ('COMMA', 
+      [
+       (('x', 37), 37), 
+       (('y', 39), 39)
+      ]
+     )
+    ]
+   )
+  )
+ ), 
+ ('CONDITION', 
+  ('COMPARE', '>', (
+   ('result', 44), 44), 
+   ((5, 46), 46)
+  ), 
+  ('BLOCK', 
+   [
+    ('FUNCTION_CALL', 'print', [('STRING', '"Result is greater than 5"')])
+   ]
+  ), 
+  ('BLOCK', 
+   [
+    ('FUNCTION_CALL', 'print', [('STRING', '"Result is 5 or less"')])
+   ]
+  )
+ )
+]
 ```

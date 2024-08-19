@@ -57,13 +57,12 @@ class GScriptParser:
 
     def parse(self):
         ast = []
-        print(self.tokens)
         while self.position < len(self.tokens):
             token = self.tokens[self.position]
             for name in self.plugins:
                 plugin = self.plugins[name]
                 result = plugin.parse()
-                print("parse:", plugin, self.position, token, result)
+                # print("parse:", plugin, self.position, token, result)
                 if result is not None:
                     # print("parse:", plugin, self.position, token, result)
                     ast.append(result)
@@ -103,19 +102,16 @@ class AssignmentParser:
                 if tokens[position][0]=='NUMBER':
                     return (('ASSIGN', var_name, tokens[position][1]), position+1)
                 
-                print("try func", tokens[position])
                 func = self.main_parser.get_plugin(FunctionCallParser)
                 result = func.parse_expression(tokens, position)
                 if result:
                     var_value = result[0]
                     new_position  = result[1]
-                    print(result, tokens[new_position])
                     if tokens[new_position][0] == 'END':
                         return (('ASSIGN', var_name, var_value), new_position+1)
                     else:
                         assert False
                 
-                print("try exp")
                 exp = ExpressionParser(self.main_parser)
                 result = exp.parse_expression(tokens, position)
                 if result:
@@ -127,7 +123,6 @@ class AssignmentParser:
                         print(result, tokens[new_position])
                         assert False
                 
-                print("try no")
         return None
 
 class ArithmeticExpressionParser:
@@ -188,7 +183,6 @@ class ArithmeticExpressionParser:
         elif tokens[position][0] == 'LPAREN':
             position += 1
             result = self.parse_expression(tokens, position)
-            print("  ", result)
             if result is not None and tokens[result[1]][0] == 'RPAREN':
                 return (result[0], result[1])
         elif tokens[position][0] == 'ID':
@@ -320,7 +314,6 @@ class BodyParser:
             position += 1
             
             while tokens[position][0] != self.right:
-                print(position, '5', tokens[position])
                 plugins = self.main_parser.plugins
                 for name in plugins:
                     plugin = plugins[name]
@@ -328,7 +321,6 @@ class BodyParser:
                         continue
                     
                     result = plugin.parse_expression(tokens, position)
-                    print(position, '5', plugin, result)
                     
                     if result is not None:
                         body.append(result[0])
@@ -337,15 +329,9 @@ class BodyParser:
                             position+=1
                         break
                 
-                # print(tokens[position])
-                # assert False
-            
             if position<len(tokens) and tokens[position][0]==self.right:
                 position+=1
             
-            if position<len(tokens):
-                print("m", tokens[position])
-            # assert False
             return (("BLOCK", body), position)
 
 class ConditionParser:
@@ -371,11 +357,9 @@ class ConditionParser:
         
         if tokens[position][0] == 'IF':
             position += 1
-            print("a")
             
             if tokens[position][0] == 'LPAREN':
                 position += 1
-                print("b")
                 
                 expr_parser = CompareParaer(self.main_parser)
                 condition, new_position = expr_parser.parse_expression(tokens, position)
@@ -389,13 +373,9 @@ class ConditionParser:
                     if tokens[position][0] == 'RPAREN':
                         position += 1
                         
-                        
-                        
                         body_parser = BodyParser(self.main_parser, "LBRACE", "RBRACE")
                         body_result = body_parser.parse_expression(tokens, position)
                         
-                        # print("c", body_result)
-                        # assert False
                         
                         if body_result is not None:
                             body_if, new_position = body_result[0], body_result[1]
@@ -545,7 +525,6 @@ class ReturnParser:
             expr_parser = ExpressionParser(self.main_parser)
             expr, new_position = expr_parser.parse_expression(tokens, position)
             
-            print("xx:", expr, new_position, tokens[new_position])
             if expr is not None:
                 return (('RETURN', expr), new_position)
         
@@ -575,17 +554,14 @@ class FunctionParser:
         if tokens[position][0] == 'FUNCTION':
             position += 1
             
-            print(position, '1')
             if tokens[position][0] == 'ID':
                 func_name = tokens[position][1]
                 position += 1
                 
-                print(position, '2')
                 if tokens[position][0] == 'LPAREN':
                     position += 1
                     params = []
                     
-                    print(position, '3')
                     while tokens[position][0] != 'RPAREN':
                         if tokens[position][0] == 'ID':
                             params.append(tokens[position][1])
@@ -599,16 +575,13 @@ class FunctionParser:
                             return None
                     
                     position += 1
-                    print(position, '4')
                     
                     body_parser = BodyParser(self.main_parser, "LBRACE", "RBRACE")
                     body_result = body_parser.parse_expression(tokens, position)
                     
-                    print(position, '5', body_result)
                     if body_result is not None:
                         body, new_position = body_result[0], body_result[1]
                         self.functions[func_name] = (params, body)
-                        print(tokens[new_position:])
                         return (('FUNCTION_DEF', func_name, params, body), new_position)
         return None
     
@@ -634,25 +607,21 @@ class FunctionCallParser:
     def parse_expression(self, tokens, position):
         if tokens[position][0] == 'ID' and tokens[position][1] in self.functions:
             func_name = tokens[position][1]
-            print("call function:", func_name)
             
             position += 1
             if tokens[position][0] == 'LPAREN':
                 position += 1
                 args = []
                 
-                print("xx", tokens[position])
                 while tokens[position][0] != 'RPAREN':
                     expr_parser = CommaExpressionParser(self.main_parser)
                     result = expr_parser.parse_expression(tokens, position)
                     arg, new_position = result
                     
-                    print("yy", result)
                     if arg is not None:
                         args.append(arg)
                         position = new_position
                         
-                        print("zz", position, tokens[position][0], tokens[position])
                         if tokens[position][0] == 'RPAREN':
                             break
                         
@@ -677,7 +646,6 @@ class GScriptExecutor:
 
     def execute_node(self, node):
         node_type = node[0]
-        print(node_type)
         if node_type == 'ASSIGN':
             _, var_name, var_value = node
             self.variables[var_name] = var_value

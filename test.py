@@ -98,5 +98,5 @@ if __name__=="__main__":
         parser.register_plugin(AssignmentParser)
         parser.register_plugin(ExpressionParser)
         ast = parser.parse()
-        print(ast)
+        print("ast:", ast)
 
